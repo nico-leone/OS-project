@@ -13,6 +13,13 @@ public class Scheduler {
     private Clock clock = Clock.systemDefaultZone();
     private Random random = new Random();
 
+    //reference to kernel
+    private final Kernel kernel;
+
+    public Scheduler(Kernel kernel){
+        this.kernel = kernel;
+    }
+
     //new createprocess function that accepts a priority as input as well as a userland object
     //creates a PCB out of that object and priority and adds it to the processqueue using the helper function
     //if nothing is currently running calls switchprocess, then returns the Pid
@@ -67,6 +74,10 @@ public class Scheduler {
 
             currently_running.stop();
             Queue_Distribution_Helper(currently_running);
+
+            if(currently_running.isDone()){
+                closeDevices(currently_running);
+            }
 
         }
 
@@ -166,5 +177,19 @@ public class Scheduler {
         switchProcess();
 
     }
+
+    //closes all opened devices
+    public void closeDevices(PCB pcb){
+        for(int i : pcb.getDeviceIds()) {
+            if (i != -1){
+                kernel.Close(i);
+            }
+
+        }
+
+    }
+
+
+
 }
 

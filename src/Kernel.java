@@ -1,8 +1,11 @@
-public class Kernel extends Process {
+public class Kernel extends Process implements Device{
     private Scheduler scheduler;
     //constructor initiates the scheduler
+
+    private VFS vfs = new VFS();
+    //initiates our VFS
     public Kernel() {
-        scheduler = new Scheduler();
+        scheduler = new Scheduler(this);
 
     }
     //scheduler getter
@@ -25,7 +28,12 @@ public class Kernel extends Process {
                     scheduler.switchProcess();
                     break;
             }
-            scheduler.getCurrentlyRunning().start();
+            if (scheduler.getCurrentlyRunning() != null) {
+                scheduler.getCurrentlyRunning().start();
+            } else {
+                System.out.println("No process left");
+            }
+
             stop();
         }
     }
@@ -40,6 +48,47 @@ public class Kernel extends Process {
 
     public static void exit() {
         OS.Exit();
+    }
+
+    @Override
+    public int Open(String s) {
+        PCB current = scheduler.getCurrentlyRunning();
+        int id = vfs.Open(s);
+        if(id != 1){
+            for(int i = 0; i < current.getDeviceIds().length; i++){
+                    if(current.getDeviceIds()[i] == -1){
+                        current.getDeviceIds()[i] = id;
+                        return i;
+                    }
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public void Close(int id) {
+        PCB current = scheduler.getCurrentlyRunning();
+        vfs.Close(current.getDeviceIds()[id]);
+        current.getDeviceIds()[id] = -1;
+
+    }
+
+    @Override
+    public byte[] Read(int id, int size) {
+        PCB current = scheduler.getCurrentlyRunning();
+        return vfs.Read(current.getDeviceIds()[id], size);
+    }
+
+    @Override
+    public void Seek(int id, int to) {
+        PCB current = scheduler.getCurrentlyRunning();
+        vfs.Seek(current.getDeviceIds()[id], to);
+    }
+
+    @Override
+    public int Write(int id, byte[] data) {
+        PCB current = scheduler.getCurrentlyRunning();
+        return vfs.Write(current.getDeviceIds()[id], data);
     }
 }
 

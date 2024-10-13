@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class PCB {
     private static int nextPid = 0;
     private int pid;
@@ -5,6 +7,8 @@ public class PCB {
     private UserlandProcess ulp;
     private Priority priority;
     private long wakeTime = 0;
+
+    private int[] d_IDs = new int[10];
 
 
     public enum Priority {
@@ -17,6 +21,8 @@ public class PCB {
         this.ulp = up;
 
         this.priority = priority;
+
+        Arrays.fill(d_IDs, -1);
 
     }
 
@@ -68,6 +74,13 @@ public class PCB {
     public long getWakeTime() {
         return wakeTime;
     }
+
+    //getter for device IDs
+    public int[] getDeviceIds() {
+        return d_IDs;
+    }
+
+
 }
 
 

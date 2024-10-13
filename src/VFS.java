@@ -1,6 +1,8 @@
 public class VFS implements Device{
     private final Device[] devices = new Device[10];
     private final int[] ids = new int[10];
+    //determines if the device being created will be a File system or random device based on what is inputed
+    //as s.
     @Override
     public int Open(String s) {
         String[] deviceData = s.split(" ", 2);
@@ -51,6 +53,7 @@ public class VFS implements Device{
         return -1;
     }
 
+    //closes the device at id
     @Override
     public void Close(int id) {
         if (id >= 0 && id < devices.length && devices[id] != null){

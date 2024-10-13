@@ -3,6 +3,9 @@ import java.io.RandomAccessFile;
 
 public class FakeFileSystem implements Device{
     private final RandomAccessFile[] randomAccessFiles= new RandomAccessFile[10];
+
+    //finds an empty slot in the randomAccessFiles array and adds a new file with given value
+    //returns id
     @Override
     public int Open(String s) {
         if(s == null || s.isEmpty()){
@@ -24,6 +27,7 @@ public class FakeFileSystem implements Device{
         return -1;
     }
 
+    //closes device at given ID
     @Override
     public void Close(int id) {
         if(id >= 0 && id < randomAccessFiles.length && randomAccessFiles[id] != null){
@@ -41,6 +45,8 @@ public class FakeFileSystem implements Device{
 
     }
 
+    //reads the value at the given ID
+    //return it in byte[] format
     @Override
     public byte[] Read(int id, int size) {
         byte[] readData = new byte[size];

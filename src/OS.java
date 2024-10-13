@@ -3,7 +3,7 @@ import java.util.ArrayList;
 public class OS {
     private static Kernel kernel;
 
-    private static Scheduler scheduler = new Scheduler();
+    private static Scheduler scheduler = new Scheduler(kernel);
 
     private static CallType current_Call;
 
