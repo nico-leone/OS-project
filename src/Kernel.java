@@ -15,23 +15,34 @@ public class Kernel extends Process implements Device{
     }
     //main with an infinite loop storing a switch statement that checks whther the current call is createprocess or switch process, then
     //takes actions accoridingly.
+    //updated in assignment 4 to account for messages
     @Override
     protected void main() {
         while (true) {
             switch (OS.getCurrentCall()) {
                 case CreateProcess://sets the return value to a craeteprocess parameter
                     UserlandProcess up = (UserlandProcess) OS.getParameters().get(0);
+                    int pid = scheduler.createProcess(up);
 
+                    OS.getPidMap().put(pid, scheduler.getCurrentlyRunning());
                     OS.setReturnValue(scheduler.createProcess(up));
                     break;
                 case SwitchProcess://switches the shedulers process
+
+                    PCB exitingPcb = scheduler.getCurrentlyRunning();
+                    if (exitingPcb != null) {
+                        OS.getPidMap().remove(exitingPcb.getPid());
+
+                    }
                     scheduler.switchProcess();
                     break;
             }
             if (scheduler.getCurrentlyRunning() != null) {
                 scheduler.getCurrentlyRunning().start();
+
             } else {
                 System.out.println("No process left");
+
             }
 
             stop();
@@ -58,8 +69,11 @@ public class Kernel extends Process implements Device{
             for(int i = 0; i < current.getDeviceIds().length; i++){
                     if(current.getDeviceIds()[i] == -1){
                         current.getDeviceIds()[i] = id;
+
                         return i;
+
                     }
+
             }
         }
         return -1;
@@ -77,18 +91,33 @@ public class Kernel extends Process implements Device{
     public byte[] Read(int id, int size) {
         PCB current = scheduler.getCurrentlyRunning();
         return vfs.Read(current.getDeviceIds()[id], size);
+
     }
 
     @Override
     public void Seek(int id, int to) {
         PCB current = scheduler.getCurrentlyRunning();
         vfs.Seek(current.getDeviceIds()[id], to);
+
     }
 
     @Override
     public int Write(int id, byte[] data) {
         PCB current = scheduler.getCurrentlyRunning();
         return vfs.Write(current.getDeviceIds()[id], data);
+
+    }
+
+    //new functions in kernel for assignment 4
+    public int GetPid(PCB process) {
+        return scheduler.getPid();
+
+    }
+
+
+    public int GetPidByName(String name) {
+        return scheduler.getPidByName(name);
+
     }
 }
 

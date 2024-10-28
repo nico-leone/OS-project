@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.LinkedList;
 
 public class PCB {
     private static int nextPid = 0;
@@ -9,6 +10,10 @@ public class PCB {
     private long wakeTime = 0;
 
     private int[] d_IDs = new int[10];
+
+    //new members for assignment 4
+    private LinkedList<kernelMessage> messageQueue = new LinkedList<>(); // Message queue
+    private String name; // Process name
 
 
     public enum Priority {
@@ -21,6 +26,7 @@ public class PCB {
         this.ulp = up;
 
         this.priority = priority;
+        this.name = ulp.getClass().getSimpleName();
 
         Arrays.fill(d_IDs, -1);
 
@@ -78,6 +84,29 @@ public class PCB {
     //getter for device IDs
     public int[] getDeviceIds() {
         return d_IDs;
+    }
+
+
+    //new functions for assignment 4
+
+    public void addMessage(kernelMessage message) {
+        messageQueue.add(message);
+
+    }
+
+    public kernelMessage getMessage() {
+        return messageQueue.poll(); // Retrieve and remove the head of the message queue
+
+    }
+
+    public boolean hasMessage() {
+        return !messageQueue.isEmpty(); // Check if the queue is not empty
+
+    }
+
+    public String getName() {
+        return name;
+
     }
 
 

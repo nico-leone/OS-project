@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class OS {
     private static Kernel kernel;
@@ -10,7 +11,10 @@ public class OS {
     private static ArrayList<Object> parameters = new ArrayList<>();
     private static Object return_Value;
 
-    //enum storing craete and switchprocess
+    //hashmap for pid
+    private static HashMap<Integer, PCB> pidMap = new HashMap<>();
+
+    //enum storing create and switchprocess
     public enum CallType {
         CreateProcess, SwitchProcess, Sleep, Exit
     }
@@ -72,6 +76,61 @@ public class OS {
     public static void Exit() {
         scheduler.exitCurrentProcess();
     }
+
+
+    // New functions in assignment 4
+
+    //GetPid and GetPidByName call a function in scheduler of the smae name
+    public static int GetPid() {
+        return scheduler.getPid();
+    }
+
+
+    public static int GetPidByName(String name) {
+        return scheduler.getPidByName(name);
+
+    }
+
+
+    public static void SendMessage(kernelMessage message) {
+        message = new kernelMessage(message);
+        message.senderPid = GetPid();
+
+        PCB targetPcb = pidMap.get(message.getTargetPid());
+        if (targetPcb != null) {
+            targetPcb.addMessage(message);
+
+
+            if (targetPcb.hasMessage()) {
+                scheduler.Queue_Distribution_Helper(targetPcb);
+
+            }
+        }
+    }
+
+    //if it has a message available immediately returns it
+    public static kernelMessage WaitForMessage() {
+        PCB currentPcb = scheduler.getCurrentlyRunning();
+
+
+        if (currentPcb.hasMessage()) {
+            return currentPcb.getMessage();
+
+        }
+
+
+        Sleep(0);
+        return null;
+
+    }
+
+
+    //getter for the pidmap
+    public static HashMap<Integer, PCB> getPidMap(){
+        return pidMap;
+
+    }
+
 }
 
 

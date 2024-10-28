@@ -47,7 +47,7 @@ public class Scheduler {
         return pcb.getPid();
     }
     //helper function that adds a given PCB process to the correct queue
-    private void Queue_Distribution_Helper(PCB pcb) {
+    public void Queue_Distribution_Helper(PCB pcb) {
 
         switch (pcb.getPriority()) {
             case RealTime:
@@ -183,9 +183,40 @@ public class Scheduler {
         for(int i : pcb.getDeviceIds()) {
             if (i != -1){
                 kernel.Close(i);
+
             }
 
         }
+
+    }
+
+    //returns the pid of the currently running function
+    public int getPid() {
+        return currently_running.getPid();
+    }
+
+    // function to get a pid by the name of the object, uses the getALLPCBS helper to do so.
+    public int getPidByName(String name) {
+        for (PCB pcb : getAllPCBs()) {
+            if (pcb.getProcess().getClass().getSimpleName().equals(name)) {
+                return pcb.getPid();
+
+            }
+
+        }
+        return -1;
+    }
+
+
+    //helper to get a list of all currently active PCBs
+    private List<PCB> getAllPCBs() {
+        List<PCB> allPCBs = new ArrayList<>();
+        allPCBs.addAll(realtime_processes);
+        allPCBs.addAll(interactive_processes);
+
+        allPCBs.addAll(background_processes);
+        allPCBs.addAll(sleeping_processes);
+        return allPCBs;
 
     }
 
