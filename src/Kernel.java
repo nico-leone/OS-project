@@ -1,5 +1,7 @@
 public class Kernel extends Process implements Device{
     private Scheduler scheduler;
+
+    static boolean[] pageTable = new boolean[1024];
     //constructor initiates the scheduler
 
     private VFS vfs = new VFS();
@@ -57,22 +59,18 @@ public class Kernel extends Process implements Device{
         OS.CreateProcess(up, priority);
     }
 
-    public static void exit() {
-        OS.Exit();
-    }
-
     @Override
     public int Open(String s) {
         PCB current = scheduler.getCurrentlyRunning();
         int id = vfs.Open(s);
         if(id != 1){
             for(int i = 0; i < current.getDeviceIds().length; i++){
-                    if(current.getDeviceIds()[i] == -1){
-                        current.getDeviceIds()[i] = id;
+                if(current.getDeviceIds()[i] == -1){
+                    current.getDeviceIds()[i] = id;
 
-                        return i;
+                    return i;
 
-                    }
+                }
 
             }
         }
@@ -119,6 +117,75 @@ public class Kernel extends Process implements Device{
         return scheduler.getPidByName(name);
 
     }
+
+    public VFS getVfs(){
+        return vfs;
+    }
+
+    //allocatememory and freememory updated for assignment 6.
+    public int allocateMemory(int numPages) {
+        for (int i = 0; i <= 1024 - numPages; i++) {
+            boolean blockAvailable = true;
+
+            // check if the range is free
+            for (int j = 0; j < numPages; j++) {
+                if (pageTable[i + j]) {
+                    blockAvailable = false;
+                    break;
+                }
+            }
+
+            if (blockAvailable) {
+                // Mark the found pages as they are used
+                for (int j = 0; j < numPages; j++) {
+                    pageTable[i + j] = true;
+                }
+                return i;
+            }
+        }
+        return -1; // Nothing found
+    }
+
+    // frees pages at start
+    public static void FreeMemory(PCB pcb, int startPage, int pageCount) {
+        for (int i = startPage; i < startPage + pageCount; i++) {
+            VirtualToPhysicalMapping mapping = pcb.getMapping(i);
+            if (mapping != null && mapping.physicalPageNumber != -1) {
+                pageTable[mapping.physicalPageNumber] = false;
+            }
+            pcb.setMapping(i, null);
+        }
+    }
+
+    // Clears the TLB
+    public static void clearTLB() {
+        for (int i = 0; i < 2; i++) {
+            UserlandProcess.TLB[i][0] = -1;
+            UserlandProcess.TLB[i][1] = -1;
+        }
+    }
+
+    // exits Kernel and makes sure to Free all memory and clear the TLB, updated for assignemnt 6
+
+
+    public static void Exit(PCB pcb) {
+        for (int i = 0; i < 100; i++) {
+            VirtualToPhysicalMapping mapping = pcb.getMapping(i);
+            if (mapping != null) {
+                if (mapping.physicalPageNumber != -1) {
+                    pageTable[mapping.physicalPageNumber] = false;
+                }
+                pcb.setMapping(i, null);
+            }
+        }
+        clearTLB(); // Clear TLB entries
+        OS.Exit(); // Exit process
+    }
 }
+
+
+
+
+
 
 

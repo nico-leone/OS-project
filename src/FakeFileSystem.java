@@ -4,6 +4,9 @@ import java.io.RandomAccessFile;
 public class FakeFileSystem implements Device{
     private final RandomAccessFile[] randomAccessFiles= new RandomAccessFile[10];
 
+    private static int swapFileId;
+    private static int nextPageToWriteOut = 0;
+
     //finds an empty slot in the randomAccessFiles array and adds a new file with given value
     //returns id
     @Override
@@ -93,6 +96,33 @@ public class FakeFileSystem implements Device{
             }
 
         return  0;
+
+    }
+
+    //helper functions for use in assignment 6.
+    public void initializeSwapFile(String swapFileName) {
+        this.swapFileId = Open(swapFileName);
+        if (this.swapFileId == -1) {
+            throw new RuntimeException("Failed to create swap file.");
+
+        }
+
+    }
+
+    public int allocateSwapPage() {
+        return nextPageToWriteOut++;
+    }
+
+    public void writeSwapPage(int pageNumber, byte[] data) {
+        this.Seek(swapFileId, pageNumber * 1024);
+        this.Write(swapFileId, data);
+
+    }
+
+    public byte[] readSwapPage(int pageNumber) {
+        this.Seek(swapFileId, pageNumber * 1024);
+
+        return this.Read(swapFileId, 1024);
 
     }
 }

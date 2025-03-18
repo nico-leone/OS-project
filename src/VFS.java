@@ -79,4 +79,14 @@ public class VFS implements Device{
     public int Write(int id, byte[] data) {
         return devices[id].Write(ids[id], data);
     }
+
+    //helper function for getting an insance of FakeFileSystem
+    public FakeFileSystem getFakeFileSystemInstance() {
+        for (Device device : devices) {
+            if (device instanceof FakeFileSystem) {
+                return (FakeFileSystem) device;
+            }
+        }
+        throw new IllegalStateException("FakeFileSystem instance not found.");
+    }
 }

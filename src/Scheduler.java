@@ -220,6 +220,98 @@ public class Scheduler {
 
     }
 
+    public PCB getRandomProcess() {
+        // Create a combined list of all active PCBs
+        List<PCB> allProcesses = getAllPCBs();
+
+        // If no processes are active, return null
+        if (allProcesses.isEmpty()) {
+            return null;
+        }
+
+        // Randomly select and return a PCB from the combined list
+        return allProcesses.get(random.nextInt(allProcesses.size()));
+    }
+
+    //helper function for the updated getMapping function is OS. These functions required a PCB and vPage.
+    //this function is the one that performs the bulk of the page swap. It begins by grabbing a random process and
+    //assigning it as the victim process. It then iterates through teh victim Processes data in order to find a page
+    //with memory assigned. It then wrties the victim page to the disk, and frees the victims physical page.
+    public void pageSwap(PCB pcb, int virtualPage) {
+        PCB victim = getRandomProcess();
+        if (victim == null) {
+            throw new IllegalStateException("No processes available for swapping.");
+        }
+
+
+        VirtualToPhysicalMapping victimMapping = null;
+        int victimPage = -1;
+        for (int i = 0; i < 100; i++) {
+
+            VirtualToPhysicalMapping mapping = victim.getMapping(i);
+            if (mapping != null && mapping.physicalPageNumber != -1) {
+                victimMapping = mapping;
+                victimPage = i;
+
+                break;
+
+            }
+        }
+
+        if (victimMapping == null) {
+            throw new IllegalStateException("No suitable victim page found for swapping.");
+        }
+
+
+        if (victimMapping.onDiskPageNumber == -1) {
+            victimMapping.onDiskPageNumber = kernel.getVfs().getFakeFileSystemInstance().allocateSwapPage();
+
+        }
+        byte[] victimData = readFromPhysicalMemory(victimMapping.physicalPageNumber);
+        kernel.getVfs().getFakeFileSystemInstance().writeSwapPage(victimMapping.onDiskPageNumber, victimData);
+
+        // Free the victim's physical page
+        Kernel.pageTable[victimMapping.physicalPageNumber] = false;
+        victimMapping.physicalPageNumber = -1;
+
+
+        int newPhysicalPage = OS.allocateNewPhysicalPage();
+        pcb.getMapping(virtualPage).physicalPageNumber = newPhysicalPage;
+
+        VirtualToPhysicalMapping requesterMapping = pcb.getMapping(virtualPage);
+        if (requesterMapping.onDiskPageNumber != -1) {
+            byte[] data = kernel.getVfs().getFakeFileSystemInstance().readSwapPage(requesterMapping.onDiskPageNumber);
+
+            loadIntoPhysicalMemory(newPhysicalPage, data);
+
+        } else {
+            initializePage(newPhysicalPage);
+
+        }
+    }
+
+    //helper functions for pageSwap
+    void loadIntoPhysicalMemory(int physicalPage, byte[] data) {
+        System.arraycopy(data, 0, Hardware.memory, physicalPage * 1024, 1024);
+
+    }
+
+    void initializePage(int physicalPage) {
+        Arrays.fill(Hardware.memory, physicalPage * 1024, (physicalPage + 1) * 1024, (byte) 0);
+
+    }
+
+    private byte[] readFromPhysicalMemory(int physicalPage) {
+        byte[] data = new byte[1024];
+        System.arraycopy(Hardware.memory, physicalPage * 1024, data, 0, 1024);
+        return data;
+
+    }
+
+
+
+
+
 
 
 }

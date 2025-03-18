@@ -14,7 +14,8 @@ public class PCB {
     //new members for assignment 4
     private LinkedList<kernelMessage> messageQueue = new LinkedList<>(); // Message queue
     private String name; // Process name
-
+    // replacement for pageArray in assignment 6, memoryMap now stores an array of 100 virtualtophysicalmappings
+    private VirtualToPhysicalMapping[] memoryMap = new VirtualToPhysicalMapping[100];
 
     public enum Priority {
         RealTime, Interactive, Background
@@ -29,6 +30,8 @@ public class PCB {
         this.name = ulp.getClass().getSimpleName();
 
         Arrays.fill(d_IDs, -1);
+
+        Arrays.fill(memoryMap, null);
 
     }
 
@@ -109,7 +112,23 @@ public class PCB {
 
     }
 
+    public VirtualToPhysicalMapping getMapping(int index) {
+        return memoryMap[index];
+    }
+
+    public void setMapping(int index, VirtualToPhysicalMapping mapping) {
+        memoryMap[index] = mapping;
+    }
+
+
+
+
+
+
 
 }
+
+
+
 
 

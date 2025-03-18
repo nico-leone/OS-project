@@ -4,12 +4,14 @@ import java.util.HashMap;
 public class OS {
     private static Kernel kernel;
 
-    private static Scheduler scheduler = new Scheduler(kernel);
+    public static Scheduler scheduler = new Scheduler(kernel);
 
     private static CallType current_Call;
 
     private static ArrayList<Object> parameters = new ArrayList<>();
     private static Object return_Value;
+
+    private static boolean[] pageArray = new boolean[1024];
 
     //hashmap for pid
     private static HashMap<Integer, PCB> pidMap = new HashMap<>();
@@ -129,6 +131,69 @@ public class OS {
     public static HashMap<Integer, PCB> getPidMap(){
         return pidMap;
 
+    }
+
+    //updated getMapping for assignment 6. Utilizes the helper function in scheduler.
+    public static void getMapping(PCB pcb, int virtualPage) {
+        VirtualToPhysicalMapping mapping = pcb.getMapping(virtualPage);
+        if (mapping == null) {
+            mapping = new VirtualToPhysicalMapping();
+            pcb.setMapping(virtualPage, mapping); // Initialize the mapping if null
+        }
+
+        if (mapping.physicalPageNumber == -1) {
+            int physicalPage = allocateNewPhysicalPage();
+            if (physicalPage == -1) {
+                scheduler.pageSwap(pcb, virtualPage);
+            } else {
+                mapping.physicalPageNumber = physicalPage;
+                if (mapping.onDiskPageNumber != -1) {
+                    byte[] data = kernel.getVfs().getFakeFileSystemInstance().readSwapPage(mapping.onDiskPageNumber);
+                    scheduler.loadIntoPhysicalMemory(physicalPage, data);
+                } else {
+                    scheduler.initializePage(physicalPage);
+                }
+            }
+        }
+    }
+
+    //helper function for getmapping function to allocate new pPages
+    static int allocateNewPhysicalPage(){
+        for(int i = 0; i < pageArray.length; i++){
+            if(!pageArray[i]) {
+                pageArray[i] = true;
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static int AllocateMemory(int size) {
+        if (size % 1024 != 0) {
+            return -1;
+        }
+        int pageCount = size / 1024;
+        for (int i = 0; i <= pageArray.length - pageCount; i++) {
+            boolean blockAvailable = true;
+            for (int j = 0; j < pageCount; j++) {
+                if (pageArray[i + j]) {
+                    blockAvailable = false;
+                    break;
+                }
+            }
+            if (blockAvailable) {
+                for (int j = 0; j < pageCount; j++) {
+                    pageArray[i + j] = true;
+                }
+                return i * 1024;
+            }
+        }
+        return -1; //no valid block found
+    }
+
+
+    public static void clearTLB_onSwitch(){
+        Kernel.clearTLB();
     }
 
 }
